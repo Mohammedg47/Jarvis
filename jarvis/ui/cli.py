@@ -7,6 +7,7 @@ import threading
 from collections.abc import Callable
 
 from prompt_toolkit import PromptSession
+from prompt_toolkit.patch_stdout import patch_stdout
 
 from jarvis.core.conversation import Conversation
 from jarvis.llm.client import LLMError
@@ -73,7 +74,8 @@ class Reader:
         with self._lock:
             self._waiting = True
         try:
-            typed = self._session.prompt(label)
+            with patch_stdout():  # reminders can print while the prompt is waiting
+                typed = self._session.prompt(label)
         finally:
             with self._lock:
                 self._waiting = False

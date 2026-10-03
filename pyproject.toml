@@ -9,6 +9,8 @@ description = "AI assistant that lives on your Windows laptop"
 readme = "README.md"
 requires-python = ">=3.11,<3.14"
 dependencies = [
+    "ddgs>=9",
+    "apscheduler>=3.10,<4",
     "pydantic-settings>=2.2",
     "ollama>=0.4",
     "prompt_toolkit>=3.0",

@@ -17,6 +17,12 @@ CREATE TABLE IF NOT EXISTS preferences (
     value TEXT NOT NULL,
     updated_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS reminders (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    message TEXT NOT NULL,
+    due_at TEXT NOT NULL,
+    done INTEGER NOT NULL DEFAULT 0
+);
 """
 
 
@@ -28,7 +34,7 @@ class MemoryStore:
     def __init__(self, path: Path) -> None:
         if str(path) != ":memory:":
             path.parent.mkdir(parents=True, exist_ok=True)
-        self._db = sqlite3.connect(path)
+        self._db = sqlite3.connect(path, check_same_thread=False)  # reminders fire from a thread
         self._db.executescript(SCHEMA)
         columns = [row[1] for row in self._db.execute("PRAGMA table_info(messages)")]
         if "used_tools" not in columns:  # database created before this column existed
@@ -68,6 +74,26 @@ class MemoryStore:
     def preferences(self) -> dict[str, str]:
         rows = self._db.execute("SELECT key, value FROM preferences ORDER BY key").fetchall()
         return dict(rows)
+
+    def add_reminder(self, message: str, due_at: datetime) -> int:
+        """Save a reminder due at an aware datetime and return its id."""
+        with self._db:
+            cursor = self._db.execute(
+                "INSERT INTO reminders (message, due_at) VALUES (?, ?)",
+                (message, due_at.astimezone(UTC).isoformat(timespec="seconds")),
+            )
+        return cursor.lastrowid
+
+    def pending_reminders(self) -> list[tuple[int, str, datetime]]:
+        """Reminders that have not fired yet, soonest first, as (id, message, due_at)."""
+        rows = self._db.execute(
+            "SELECT id, message, due_at FROM reminders WHERE done = 0 ORDER BY due_at"
+        ).fetchall()
+        return [(i, m, datetime.fromisoformat(d)) for i, m, d in rows]
+
+    def finish_reminder(self, reminder_id: int) -> None:
+        with self._db:
+            self._db.execute("UPDATE reminders SET done = 1 WHERE id = ?", (reminder_id,))
 
     def forget_all(self) -> None:
         with self._db:

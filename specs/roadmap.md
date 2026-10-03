@@ -54,11 +54,11 @@ Each phase leaves a working system. Each step is small and has a "done when" che
 - [x] 8. Handle errors (no mic, no internet, API failure) with a clear message. *Done when:* each failure is reported without a crash.
 
 ## Phase 7: Web search and reminders
-1. `web_search` tool using `ddgs`. *Done when:* it returns top results.
-2. Summarize results into a short answer with sources. *Done when:* a factual question gets a sourced answer.
-3. `set_timer` tool. *Done when:* an alert fires after N minutes.
-4. `set_reminder` at a clock time, persisted in SQLite. *Done when:* it survives a restart.
-5. Alerts are spoken and printed. *Done when:* both happen when a reminder fires.
+- [x] 1. `web_search` tool using `ddgs`. *Done when:* it returns top results.
+- [x] 2. Summarize results into a short answer with sources. *Done when:* a factual question gets a sourced answer.
+- [x] 3. `set_timer` tool. *Done when:* an alert fires after N minutes.
+- [x] 4. `set_reminder` at a clock time, persisted in SQLite. *Done when:* it survives a restart.
+- [x] 5. Alerts are spoken and printed. *Done when:* both happen when a reminder fires.
 
 ## Phase 8: Email and calendar (Google)
 1. Create a Google Cloud project, enable the Gmail and Calendar APIs, and document it. *Done when:* `credentials.json` is available locally.

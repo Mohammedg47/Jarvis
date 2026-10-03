@@ -4,7 +4,7 @@ from jarvis.core.logging import setup_logging
 from jarvis.llm.client import OllamaClient
 from jarvis.llm.system_prompt import build_system_prompt
 from jarvis.memory import MemoryStore
-from jarvis.tools import ToolRunner, default_registry
+from jarvis.tools import ToolRunner, default_registry, reminders
 from jarvis.tools.memory import configure as configure_memory_tools
 from jarvis.ui.cli import Reader, make_confirm, run_cli
 from jarvis.voice.elevenlabs_io import Voice
@@ -38,6 +38,13 @@ def main() -> None:
     configure_memory_tools(memory)
     reader = Reader()
     voice = start_voice(settings, reader)
+
+    def alert(message: str) -> None:
+        print(f"\n[reminder] {message}")
+        if voice is not None:
+            voice.say(f"Reminder: {message}")
+
+    reminders.start(memory, alert)
     runner = ToolRunner(default_registry, confirm=make_confirm(reader, voice))
     conversation = Conversation(
         client.chat, build_system_prompt(settings.personality), runner, memory
@@ -45,6 +52,7 @@ def main() -> None:
     try:
         run_cli(conversation, memory, reader, voice, settings.personality)
     finally:
+        reminders.stop()
         if voice is not None:
             voice.stop()
         memory.close()
