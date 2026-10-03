@@ -37,11 +37,11 @@ Each phase leaves a working system. Each step is small and has a "done when" che
 - [ ] 9. `lock_screen` and `shutdown` (risky). *Done when:* lock works and shutdown requires confirmation.
 
 ## Phase 5: Memory
-1. Create the SQLite schema (messages, preferences). *Done when:* the DB file is created on first run.
-2. Save every message. *Done when:* history survives a restart.
-3. Load recent history into the next session. *Done when:* Jarvis recalls the last conversation.
-4. Add `remember_preference` and `recall_preferences` tools. *Done when:* "I prefer dark mode" is recalled later.
-5. Add a `/forget` command to wipe memory. *Done when:* the DB is cleared on request.
+- [x] 1. Create the SQLite schema (messages, preferences). *Done when:* the DB file is created on first run.
+- [x] 2. Save every message. *Done when:* history survives a restart.
+- [x] 3. Load recent history into the next session. *Done when:* Jarvis recalls the last conversation.
+- [x] 4. Add `remember_preference` and `recall_preferences` tools. *Done when:* "I prefer dark mode" is recalled later.
+- [x] 5. Add a `/forget` command to wipe memory. *Done when:* the DB is cleared on request.
 
 ## Phase 6: Voice
 1. Add ElevenLabs key check and a TTS function. *Done when:* a test sentence is spoken.

@@ -7,8 +7,12 @@ from prompt_toolkit import PromptSession
 
 from jarvis.core.conversation import Conversation
 from jarvis.llm.client import LLMError
+from jarvis.memory import MemoryStore
 
-HELP = "Commands: /clear  forget this conversation, /help  show this, /exit  quit"
+HELP = (
+    "Commands: /clear  reset this conversation, /forget  wipe all saved memory, "
+    "/help  show this, /exit  quit"
+)
 
 
 def _make_reader() -> Callable[[], str]:
@@ -26,7 +30,7 @@ def confirm_in_terminal(name: str, arguments: dict) -> bool:
     return answer.strip().lower() in ("y", "yes")
 
 
-def run_cli(conversation: Conversation) -> None:
+def run_cli(conversation: Conversation, memory: MemoryStore | None = None) -> None:
     read = _make_reader()
     print(f"Jarvis is ready. {HELP}")
     while True:
@@ -43,6 +47,18 @@ def run_cli(conversation: Conversation) -> None:
             if command == "/clear":
                 conversation.clear()
                 print("Conversation cleared.")
+            elif command == "/forget":
+                if memory is None:
+                    print("There is no saved memory.")
+                elif input("Wipe all saved history and preferences? [y/N] ").strip().lower() in (
+                    "y",
+                    "yes",
+                ):
+                    memory.forget_all()
+                    conversation.clear()
+                    print("Memory wiped.")
+                else:
+                    print("Memory kept.")
             elif command == "/help":
                 print(HELP)
             else:
