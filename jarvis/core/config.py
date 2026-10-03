@@ -28,6 +28,11 @@ class Settings(BaseSettings):
     personality: Literal["playful", "formal"] = "playful"
     push_to_talk_hotkey: str = "ctrl+space"
 
+    # Extra apps for open_app, as JSON: {"spotify": "spotify.exe"}. Merged over the built-in map.
+    apps: dict[str, str] = Field(default_factory=dict)
+    # Folders the file tools may touch, as a JSON list. Empty means the standard user folders.
+    file_roots: list[Path] = Field(default_factory=list)
+
     log_level: str = "INFO"
     data_dir: Path = Field(default_factory=default_data_dir)
 

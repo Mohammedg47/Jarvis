@@ -26,15 +26,15 @@ Each phase leaves a working system. Each step is small and has a "done when" che
 - [x] 5. Handle tool errors and unknown tools gracefully. *Done when:* a failing tool does not crash the chat.
 
 ## Phase 4: Admin tools
-1. `open_app`: launch by name from an allow-list/config map. *Done when:* "open Notepad" works.
-2. `list_apps`: list running apps. *Done when:* it returns process names.
-3. `close_app` (risky): close by name after confirmation. *Done when:* Notepad closes only after "yes".
-4. `search_files`: find files by name in chosen folders. *Done when:* a known file is found.
-5. `open_file`: open a file with its default app. *Done when:* a text file opens.
-6. `create_file`, `move_file`: basic file writes. *Done when:* both work in a temp folder test.
-7. `delete_file` (risky): sends to the Recycle Bin. *Done when:* the file is recoverable and confirmation was required.
-8. `set_volume` and `mute`. *Done when:* system volume changes.
-9. `lock_screen` and `shutdown` (risky). *Done when:* lock works and shutdown requires confirmation.
+- [x] 1. `open_app`: launch by name from an allow-list/config map. *Done when:* "open Notepad" works.
+- [x] 2. `list_apps`: list running apps. *Done when:* it returns process names.
+- [x] 3. `close_app` (risky): close by name after confirmation. *Done when:* Notepad closes only after "yes".
+- [x] 4. `search_files`: find files by name in chosen folders. *Done when:* a known file is found.
+- [x] 5. `open_file`: open a file with its default app. *Done when:* a text file opens.
+- [x] 6. `create_file`, `move_file`: basic file writes. *Done when:* both work in a temp folder test.
+- [x] 7. `delete_file` (risky): sends to the Recycle Bin. *Done when:* the file is recoverable and confirmation was required.
+- [x] 8. `set_volume` and `mute`. *Done when:* system volume changes.
+- [ ] 9. `lock_screen` and `shutdown` (risky). *Done when:* lock works and shutdown requires confirmation.
 
 ## Phase 5: Memory
 1. Create the SQLite schema (messages, preferences). *Done when:* the DB file is created on first run.
