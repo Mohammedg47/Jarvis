@@ -19,11 +19,11 @@ Each phase leaves a working system. Each step is small and has a "done when" che
 - [x] 6. Add `/exit` and `/clear` commands. *Done when:* both work.
 
 ## Phase 3: Tool framework and safety
-1. Create the tool registry and `@tool` decorator with a risk level. *Done when:* a sample tool is registered.
-2. Generate JSON schemas from tool signatures. *Done when:* the schema is passed to Ollama.
-3. Implement the tool-call loop (LLM calls tool, result goes back to the LLM). *Done when:* a `get_time` tool answers "what time is it?".
-4. Add the permission gate with a yes/no confirmation for `risky` tools. *Done when:* a dummy risky tool waits for approval.
-5. Handle tool errors and unknown tools gracefully. *Done when:* a failing tool does not crash the chat.
+- [x] 1. Create the tool registry and `@tool` decorator with a risk level. *Done when:* a sample tool is registered.
+- [x] 2. Generate JSON schemas from tool signatures. *Done when:* the schema is passed to Ollama.
+- [x] 3. Implement the tool-call loop (LLM calls tool, result goes back to the LLM). *Done when:* a `get_time` tool answers "what time is it?".
+- [x] 4. Add the permission gate with a yes/no confirmation for `risky` tools. *Done when:* a dummy risky tool waits for approval.
+- [x] 5. Handle tool errors and unknown tools gracefully. *Done when:* a failing tool does not crash the chat.
 
 ## Phase 4: Admin tools
 1. `open_app`: launch by name from an allow-list/config map. *Done when:* "open Notepad" works.

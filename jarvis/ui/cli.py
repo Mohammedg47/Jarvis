@@ -19,6 +19,13 @@ def _make_reader() -> Callable[[], str]:
     return lambda: input("You: ")
 
 
+def confirm_in_terminal(name: str, arguments: dict) -> bool:
+    """Ask the user to approve a risky tool call. Anything but an explicit yes is a no."""
+    args = ", ".join(f"{k}={v!r}" for k, v in arguments.items())
+    answer = input(f"\n[confirm] Jarvis wants to run {name}({args}). Allow? [y/N] ")
+    return answer.strip().lower() in ("y", "yes")
+
+
 def run_cli(conversation: Conversation) -> None:
     read = _make_reader()
     print(f"Jarvis is ready. {HELP}")
