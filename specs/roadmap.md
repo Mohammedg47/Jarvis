@@ -11,12 +11,12 @@ Each phase leaves a working system. Each step is small and has a "done when" che
 - [x] 6. Update `CLAUDE.md` with the real commands. *Done when:* install, run and test commands are documented.
 
 ## Phase 2: Text brain (CLI)
-1. Install Ollama and pull the default model; document it. *Done when:* `ollama run` works.
-2. Write an Ollama client wrapper that takes a model name from config. *Done when:* it returns a reply to "hello".
-3. Add a system prompt file. *Done when:* the prompt is loaded from disk.
-4. Build a CLI chat loop with message history. *Done when:* a multi-turn chat works in the terminal.
-5. Stream replies token by token. *Done when:* text appears as it is generated.
-6. Add `/exit` and `/clear` commands. *Done when:* both work.
+- [x] 1. Install Ollama and pull the default model (`qwen2.5:3b`); document it. *Done when:* `ollama run` works.
+- [x] 2. Write an Ollama client wrapper that takes a model name from config. *Done when:* it returns a reply to "hello".
+- [x] 3. Add a system prompt file. *Done when:* the prompt is loaded from disk.
+- [x] 4. Build a CLI chat loop with message history. *Done when:* a multi-turn chat works in the terminal.
+- [x] 5. Stream replies token by token. *Done when:* text appears as it is generated.
+- [x] 6. Add `/exit` and `/clear` commands. *Done when:* both work.
 
 ## Phase 3: Tool framework and safety
 1. Create the tool registry and `@tool` decorator with a risk level. *Done when:* a sample tool is registered.

@@ -10,6 +10,8 @@ readme = "README.md"
 requires-python = ">=3.11,<3.14"
 dependencies = [
     "pydantic-settings>=2.2",
+    "ollama>=0.4",
+    "prompt_toolkit>=3.0",
 ]
 
 [project.optional-dependencies]
@@ -27,3 +29,6 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+
+[tool.setuptools.package-data]
+jarvis = ["llm/prompts/*.md"]

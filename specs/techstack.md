@@ -7,7 +7,7 @@
 ## Components
 | Area | Choice | Notes |
 |---|---|---|
-| LLM | Ollama (local) via the `ollama` Python client | Model name set in config; default small (3-8B) model with tool-calling support |
+| LLM | Ollama (local) via the `ollama` Python client | Model name set in config. Default `qwen2.5:3b` (benchmarked on the dev laptop: i7-7700HQ, 15.8 GB RAM, GTX 1050 4 GB; 100% on GPU, ~21 tok/s, correct tool calls). 7-8B models exceed 4 GB VRAM and run slowly |
 | Text-to-speech | ElevenLabs SDK | Voice ID configurable |
 | Speech-to-text | ElevenLabs SDK | Fed by recorded microphone audio |
 | Audio capture/playback | `sounddevice`, `numpy` | Push-to-talk recording, playback of TTS audio |
