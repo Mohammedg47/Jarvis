@@ -3,12 +3,12 @@
 Each phase leaves a working system. Each step is small and has a "done when" check.
 
 ## Phase 1: Foundation
-1. Create the package layout (`jarvis/`, `tests/`) and `pyproject.toml`. *Done when:* `pip install -e .` succeeds.
-2. Add `.gitignore` (`.venv`, `.env`, data dir). *Done when:* secrets cannot be committed.
-3. Add config loading (`pydantic-settings`, `.env.example`). *Done when:* settings load from `.env`.
-4. Add logging to a file and the console. *Done when:* a log line appears in both.
-5. Set up `pytest` and `ruff` with one passing test. *Done when:* `pytest` and `ruff check` pass.
-6. Update `CLAUDE.md` with the real commands. *Done when:* install, run and test commands are documented.
+- [x] 1. Create the package layout (`jarvis/`, `tests/`) and `pyproject.toml`. *Done when:* `pip install -e .` succeeds.
+- [x] 2. Add `.gitignore` (`.venv`, `.env`, data dir). *Done when:* secrets cannot be committed.
+- [x] 3. Add config loading (`pydantic-settings`, `.env.example`). *Done when:* settings load from `.env`.
+- [x] 4. Add logging to a file and the console. *Done when:* a log line appears in both.
+- [x] 5. Set up `pytest` and `ruff` with one passing test. *Done when:* `pytest` and `ruff check` pass.
+- [x] 6. Update `CLAUDE.md` with the real commands. *Done when:* install, run and test commands are documented.
 
 ## Phase 2: Text brain (CLI)
 1. Install Ollama and pull the default model; document it. *Done when:* `ollama run` works.

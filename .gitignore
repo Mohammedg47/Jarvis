@@ -1,0 +1,13 @@
+# Python
+.venv/
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Secrets and local data
+.env
+credentials.json
+token.json
+data/
+*.log
