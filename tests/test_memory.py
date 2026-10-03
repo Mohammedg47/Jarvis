@@ -62,3 +62,12 @@ def test_forget_all_clears_everything():
     store.set_preference("a", "b")
     store.forget_all()
     assert store.recent_messages(10) == [] and store.preferences() == {}
+
+
+def test_turns_that_used_tools_are_not_replayed():
+    store = MemoryStore(Path(":memory:"))
+    store.add_message("user", "hi")
+    store.add_message("assistant", "hello")
+    store.add_message("user", "open notepad", used_tools=True)
+    store.add_message("assistant", "Notepad opened.", used_tools=True)
+    assert [m["content"] for m in store.recent_messages(10)] == ["hi", "hello"]

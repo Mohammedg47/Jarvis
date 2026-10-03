@@ -64,3 +64,13 @@ def test_delete_requires_confirmation_and_uses_recycle_bin(sandbox, monkeypatch)
 def test_close_app_refuses_protected_processes():
     runner = ToolRunner(default_registry, confirm=lambda name, args: True)
     assert "protected" in runner.run("close_app", {"name": "explorer"})
+
+
+def test_write_note_writes_opens_and_never_overwrites(sandbox, monkeypatch):
+    opened = []
+    monkeypatch.setattr(files.os, "startfile", opened.append, raising=False)
+    files.write_note("buy milk", "shopping list")
+    files.write_note("eggs", "shopping list")
+    assert (sandbox / "shopping list.txt").read_text(encoding="utf-8") == "buy milk"
+    assert (sandbox / "shopping list 2.txt").read_text(encoding="utf-8") == "eggs"
+    assert len(opened) == 2

@@ -39,10 +39,11 @@ class Conversation:
         """Persist the finished turn: the user's message and the final reply, not tool steps."""
         if self._memory is None:
             return
+        used_tools = any(m.get("tool_calls") for m in self.messages[start:])
         for message in self.messages[start:]:
             is_chat = message["role"] in ("user", "assistant") and not message.get("tool_calls")
             if is_chat and message["content"]:
-                self._memory.add_message(message["role"], message["content"])
+                self._memory.add_message(message["role"], message["content"], used_tools)
 
     def send(self, text: str) -> Iterator[str]:
         """Add the user's message and stream the reply, running any tools the model calls."""
@@ -85,6 +86,11 @@ class Conversation:
         if self._tools is None:
             return self._chat(self.messages)
         return self._chat(self.messages, tools=self._tools.schemas())
+
+    def set_system_prompt(self, system_prompt: str) -> None:
+        """Swap the system prompt (e.g. a personality change); history is kept."""
+        self._prompt = system_prompt
+        self.messages[0] = self._system_message()
 
     def clear(self) -> None:
         self.messages = [self._system_message()]

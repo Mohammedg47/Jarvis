@@ -99,6 +99,27 @@ def create_file(path: str, content: str = "") -> str:
 
 
 @tool()
+def write_note(text: str, name: str = "note") -> str:
+    """Write text into a new .txt file and open it in Notepad. Use this whenever the user
+    wants something written or typed into a note, document or Notepad.
+
+    Args:
+        text: The exact text to put in the note, and nothing else.
+        name: Short file name without extension, e.g. "shopping list".
+    """
+    stem = "".join(c for c in name if c.isalnum() or c in " -_").strip() or "note"
+    target = resolve_path(f"{stem}.txt")
+    number = 2
+    while target.exists():  # never overwrite: shopping list 2.txt, 3.txt, ...
+        target = resolve_path(f"{stem} {number}.txt")
+        number += 1
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(text, encoding="utf-8")
+    os.startfile(target)
+    return f"Wrote the note to {target} and opened it."
+
+
+@tool()
 def move_file(source: str, destination: str) -> str:
     """Move or rename a file or folder. Never overwrites an existing file.
 

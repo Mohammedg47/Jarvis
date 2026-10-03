@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     elevenlabs_api_key: str = Field(default="", validation_alias="ELEVENLABS_API_KEY")
     elevenlabs_voice_id: str = ""
 
+    # Speak replies aloud (needs an ElevenLabs key). Toggle live with /speak.
+    speak_replies: bool = True
+
     ollama_model: str = "qwen2.5:3b"
     personality: Literal["playful", "formal"] = "playful"
     push_to_talk_hotkey: str = "ctrl+space"

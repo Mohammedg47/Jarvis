@@ -45,3 +45,11 @@ def test_system_prompt_loads_from_disk(personality):
     prompt = build_system_prompt(personality)
     assert "Jarvis" in prompt
     assert f"Personality: {personality}" in prompt
+
+
+def test_set_system_prompt_keeps_history():
+    convo = Conversation(fake_chat, "sys")
+    list(convo.send("hello"))
+    convo.set_system_prompt("new")
+    assert convo.messages[0]["content"] == "new"
+    assert len(convo.messages) == 3

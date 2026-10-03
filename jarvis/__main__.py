@@ -6,7 +6,25 @@ from jarvis.llm.system_prompt import build_system_prompt
 from jarvis.memory import MemoryStore
 from jarvis.tools import ToolRunner, default_registry
 from jarvis.tools.memory import configure as configure_memory_tools
-from jarvis.ui.cli import confirm_in_terminal, run_cli
+from jarvis.ui.cli import Reader, make_confirm, run_cli
+from jarvis.voice.elevenlabs_io import Voice
+from jarvis.voice.session import VoiceSession
+
+
+def start_voice(settings, reader: Reader) -> VoiceSession | None:
+    """Voice needs an ElevenLabs key and a real console; otherwise Jarvis stays text-only."""
+    if not settings.elevenlabs_api_key:
+        print("Voice is off: set ELEVENLABS_API_KEY in .env to enable it.")
+        return None
+    if not reader.interactive:
+        return None
+    session = VoiceSession(
+        Voice(settings.elevenlabs_api_key, settings.elevenlabs_voice_id),
+        settings.push_to_talk_hotkey,
+        reader.inject,
+        speak_replies=settings.speak_replies,
+    )
+    return session if session.start() else None
 
 
 def main() -> None:
@@ -18,13 +36,17 @@ def main() -> None:
     client = OllamaClient(settings.ollama_model)
     memory = MemoryStore(settings.data_dir / "memory.db")
     configure_memory_tools(memory)
-    runner = ToolRunner(default_registry, confirm=confirm_in_terminal)
+    reader = Reader()
+    voice = start_voice(settings, reader)
+    runner = ToolRunner(default_registry, confirm=make_confirm(reader, voice))
     conversation = Conversation(
         client.chat, build_system_prompt(settings.personality), runner, memory
     )
     try:
-        run_cli(conversation, memory)
+        run_cli(conversation, memory, reader, voice, settings.personality)
     finally:
+        if voice is not None:
+            voice.stop()
         memory.close()
 
 

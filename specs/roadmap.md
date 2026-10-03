@@ -34,7 +34,7 @@ Each phase leaves a working system. Each step is small and has a "done when" che
 - [x] 6. `create_file`, `move_file`: basic file writes. *Done when:* both work in a temp folder test.
 - [x] 7. `delete_file` (risky): sends to the Recycle Bin. *Done when:* the file is recoverable and confirmation was required.
 - [x] 8. `set_volume` and `mute`. *Done when:* system volume changes.
-- [ ] 9. `lock_screen` and `shutdown` (risky). *Done when:* lock works and shutdown requires confirmation.
+- [x] 9. `lock_screen` and `shutdown` (risky). *Done when:* lock works and shutdown requires confirmation.
 
 ## Phase 5: Memory
 - [x] 1. Create the SQLite schema (messages, preferences). *Done when:* the DB file is created on first run.
@@ -44,14 +44,14 @@ Each phase leaves a working system. Each step is small and has a "done when" che
 - [x] 5. Add a `/forget` command to wipe memory. *Done when:* the DB is cleared on request.
 
 ## Phase 6: Voice
-1. Add ElevenLabs key check and a TTS function. *Done when:* a test sentence is spoken.
-2. Speak Jarvis's replies (toggle in config). *Done when:* text replies are also spoken.
-3. Record microphone audio to a buffer. *Done when:* a saved clip plays back.
-4. Send audio to ElevenLabs STT. *Done when:* the transcript matches what was said.
-5. Add the push-to-talk hotkey (hold to record, release to send). *Done when:* hold, speak and get a spoken answer.
-6. Merge voice and text into one input pipeline. *Done when:* both work in the same session.
-7. Voice confirmations for risky actions. *Done when:* saying "yes" or "no" approves or cancels.
-8. Handle errors (no mic, no internet, API failure) with a clear message. *Done when:* each failure is reported without a crash.
+- [x] 1. Add ElevenLabs key check and a TTS function. *Done when:* a test sentence is spoken.
+- [x] 2. Speak Jarvis's replies (toggle in config). *Done when:* text replies are also spoken.
+- [ ] 3. Record microphone audio to a buffer. *Done when:* a saved clip plays back. *(Pending live check: `python -m jarvis.voice record` ran without errors but playback was not heard; likely the default mic is the Beats headset. Retest later, try another input device.)*
+- [x] 4. Send audio to ElevenLabs STT. *Done when:* the transcript matches what was said.
+- [x] 5. Add the push-to-talk hotkey (hold to record, release to send). *Done when:* hold, speak and get a spoken answer.
+- [x] 6. Merge voice and text into one input pipeline. *Done when:* both work in the same session.
+- [x] 7. Voice confirmations for risky actions. *Done when:* saying "yes" or "no" approves or cancels.
+- [x] 8. Handle errors (no mic, no internet, API failure) with a clear message. *Done when:* each failure is reported without a crash.
 
 ## Phase 7: Web search and reminders
 1. `web_search` tool using `ddgs`. *Done when:* it returns top results.

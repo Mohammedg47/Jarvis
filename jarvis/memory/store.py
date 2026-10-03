@@ -9,7 +9,8 @@ CREATE TABLE IF NOT EXISTS messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     role TEXT NOT NULL,
     content TEXT NOT NULL,
-    created_at TEXT NOT NULL
+    created_at TEXT NOT NULL,
+    used_tools INTEGER NOT NULL DEFAULT 0
 );
 CREATE TABLE IF NOT EXISTS preferences (
     key TEXT PRIMARY KEY,
@@ -29,18 +30,29 @@ class MemoryStore:
             path.parent.mkdir(parents=True, exist_ok=True)
         self._db = sqlite3.connect(path)
         self._db.executescript(SCHEMA)
+        columns = [row[1] for row in self._db.execute("PRAGMA table_info(messages)")]
+        if "used_tools" not in columns:  # database created before this column existed
+            with self._db:
+                self._db.execute(
+                    "ALTER TABLE messages ADD COLUMN used_tools INTEGER NOT NULL DEFAULT 0"
+                )
 
-    def add_message(self, role: str, content: str) -> None:
+    def add_message(self, role: str, content: str, used_tools: bool = False) -> None:
         with self._db:
             self._db.execute(
-                "INSERT INTO messages (role, content, created_at) VALUES (?, ?, ?)",
-                (role, content, _now()),
+                "INSERT INTO messages (role, content, created_at, used_tools) VALUES (?, ?, ?, ?)",
+                (role, content, _now(), int(used_tools)),
             )
 
     def recent_messages(self, limit: int) -> list[dict]:
-        """The last `limit` messages, oldest first, in the format the LLM expects."""
+        """The last `limit` messages, oldest first, in the format the LLM expects.
+
+        Turns where tools ran are skipped: their tool steps are not saved, so replaying
+        "Notepad opened." with no tool call teaches the model to claim actions without acting.
+        """
         rows = self._db.execute(
-            "SELECT role, content FROM messages ORDER BY id DESC LIMIT ?", (limit,)
+            "SELECT role, content FROM messages WHERE used_tools = 0 ORDER BY id DESC LIMIT ?",
+            (limit,),
         ).fetchall()
         return [{"role": role, "content": content} for role, content in reversed(rows)]
 
