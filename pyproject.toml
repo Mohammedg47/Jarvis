@@ -21,6 +21,8 @@ dependencies = [
     "sounddevice>=0.4",
     "numpy>=1.26",
     "keyboard>=0.13",
+    "google-api-python-client>=2.100",
+    "google-auth-oauthlib>=1.2",
 ]
 
 [project.optional-dependencies]

@@ -36,6 +36,16 @@ class Settings(BaseSettings):
     # Folders the file tools may touch, as a JSON list. Empty means the standard user folders.
     file_roots: list[Path] = Field(default_factory=list)
 
+    # OAuth client file from Google Cloud (see docs/google-setup.md). Default: <data dir>\credentials.json.
+    google_credentials: Path | None = None
+
+    # Proactive alerts (Google). Each can be turned off; a disabled one is never polled.
+    alert_events: bool = True
+    alert_important_email: bool = True
+    alert_event_minutes: int = 10  # warn this long before an event starts
+    alert_poll_minutes: int = 5
+    alert_email_label: str = "IMPORTANT"  # Gmail label that counts as important
+
     log_level: str = "INFO"
     data_dir: Path = Field(default_factory=default_data_dir)
 

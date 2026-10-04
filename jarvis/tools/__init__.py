@@ -3,7 +3,9 @@
 from jarvis.tools import (  # noqa: F401  (registers the tools)
     apps,
     builtin,
+    calendar,
     files,
+    gmail,
     memory,
     reminders,
     system,

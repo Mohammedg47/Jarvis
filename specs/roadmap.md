@@ -46,7 +46,7 @@ Each phase leaves a working system. Each step is small and has a "done when" che
 ## Phase 6: Voice
 - [x] 1. Add ElevenLabs key check and a TTS function. *Done when:* a test sentence is spoken.
 - [x] 2. Speak Jarvis's replies (toggle in config). *Done when:* text replies are also spoken.
-- [ ] 3. Record microphone audio to a buffer. *Done when:* a saved clip plays back. *(Pending live check: `python -m jarvis.voice record` ran without errors but playback was not heard; likely the default mic is the Beats headset. Retest later, try another input device.)*
+- [x] 3. Record microphone audio to a buffer. *Done when:* a saved clip plays back.
 - [x] 4. Send audio to ElevenLabs STT. *Done when:* the transcript matches what was said.
 - [x] 5. Add the push-to-talk hotkey (hold to record, release to send). *Done when:* hold, speak and get a spoken answer.
 - [x] 6. Merge voice and text into one input pipeline. *Done when:* both work in the same session.
@@ -61,17 +61,17 @@ Each phase leaves a working system. Each step is small and has a "done when" che
 - [x] 5. Alerts are spoken and printed. *Done when:* both happen when a reminder fires.
 
 ## Phase 8: Email and calendar (Google)
-1. Create a Google Cloud project, enable the Gmail and Calendar APIs, and document it. *Done when:* `credentials.json` is available locally.
-2. Add the OAuth login flow with local token storage and minimal scopes. *Done when:* the first run opens a browser and later runs reuse the token.
-3. `list_events`: view today's and upcoming events. *Done when:* "what's on today?" answers correctly.
-4. `create_event` and `edit_event` (risky): require confirmation. *Done when:* an event is created or changed only after "yes".
-5. `read_emails`: list recent or unread messages. *Done when:* the latest emails are listed.
-6. `summarize_email`: summarize a message or thread with the LLM. *Done when:* a chosen email gets a short summary.
-7. `draft_email`: save a draft in Gmail. *Done when:* the draft appears in Gmail.
-8. `send_email` (risky): send after showing the recipient, subject and body for confirmation. *Done when:* nothing is sent without "yes".
-9. Proactive alerts for upcoming events (poll via scheduler). *Done when:* an alert fires N minutes before an event.
-10. Proactive alerts for new important email (e.g. Gmail "important" label, configurable). *Done when:* a new important email triggers a spoken/text notice.
-11. Add a config option to turn each proactive alert on or off. *Done when:* disabling stops the polling.
+- [x] 1. Create a Google Cloud project, enable the Gmail and Calendar APIs, and document it. *Done when:* `credentials.json` is available locally.
+- [x] 2. Add the OAuth login flow with local token storage and minimal scopes. *Done when:* the first run opens a browser and later runs reuse the token.
+- [x] 3. `list_events`: view today's and upcoming events. *Done when:* "what's on today?" answers correctly.
+- [x] 4. `create_event` and `edit_event` (risky): require confirmation. *Done when:* an event is created or changed only after "yes".
+- [x] 5. `read_emails`: list recent or unread messages. *Done when:* the latest emails are listed.
+- [x] 6. `summarize_email`: summarize a message or thread with the LLM. *Done when:* a chosen email gets a short summary.
+- [x] 7. `draft_email`: save a draft in Gmail. *Done when:* the draft appears in Gmail.
+- [x] 8. `send_email` (risky): send after showing the recipient, subject and body for confirmation. *Done when:* nothing is sent without "yes".
+- [x] 9. Proactive alerts for upcoming events (poll via scheduler). *Done when:* an alert fires N minutes before an event.
+- [x] 10. Proactive alerts for new important email (e.g. Gmail "important" label, configurable). *Done when:* a new important email triggers a spoken/text notice.
+- [x] 11. Add a config option to turn each proactive alert on or off. *Done when:* disabling stops the polling.
 
 ## Phase 9: Floating character
 1. Add an event bus emitting idle/listening/thinking/speaking. *Done when:* events log in the CLI.

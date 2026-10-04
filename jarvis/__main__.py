@@ -1,6 +1,8 @@
 from jarvis.core.config import get_settings
 from jarvis.core.conversation import Conversation
 from jarvis.core.logging import setup_logging
+from jarvis.google import service as google_service
+from jarvis.google.alerts import AlertPoller
 from jarvis.llm.client import OllamaClient
 from jarvis.llm.system_prompt import build_system_prompt
 from jarvis.memory import MemoryStore
@@ -45,6 +47,11 @@ def main() -> None:
             voice.say(f"Reminder: {message}")
 
     reminders.start(memory, alert)
+    google_service.configure(settings)
+    poller = AlertPoller(settings, alert)
+    started = poller.start()
+    if started:
+        print(f"Google alerts on: {', '.join(started)}.")
     runner = ToolRunner(default_registry, confirm=make_confirm(reader, voice))
     conversation = Conversation(
         client.chat, build_system_prompt(settings.personality), runner, memory
@@ -53,6 +60,7 @@ def main() -> None:
         run_cli(conversation, memory, reader, voice, settings.personality)
     finally:
         reminders.stop()
+        poller.stop()
         if voice is not None:
             voice.stop()
         memory.close()

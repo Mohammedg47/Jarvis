@@ -46,7 +46,7 @@ class ToolRunner:
         except Exception as exc:  # a broken tool must never crash the chat
             logger.exception("Tool %s failed", name)
             return f"Error: '{name}' failed: {exc}"
-        logger.info("Tool %s %s -> %r", name, arguments, result)
+        logger.info("Tool %s %s -> %.200r", name, arguments, result)
         return "Done." if result is None else str(result)
 
     def _approved(self, name: str, arguments: dict) -> bool:
