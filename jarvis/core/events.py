@@ -47,3 +47,28 @@ class EventBus:
 def log_state(state: State) -> None:
     """Subscriber that logs every state change (shown in the CLI and the log file)."""
     logger.info("state: %s", state.value)
+
+
+class Notifier:
+    """Broadcasts alert messages (reminders, calendar and email alerts) to every interface.
+
+    Subscribers run on the thread that raised the alert, so a Qt subscriber must hand the text
+    to the Qt thread through a signal.
+    """
+
+    def __init__(self) -> None:
+        self._subscribers: list[Callable[[str], None]] = []
+        self._lock = threading.Lock()
+
+    def subscribe(self, callback: Callable[[str], None]) -> None:
+        with self._lock:
+            self._subscribers.append(callback)
+
+    def notify(self, message: str) -> None:
+        with self._lock:
+            subscribers = list(self._subscribers)
+        for callback in subscribers:
+            try:
+                callback(message)
+            except Exception:
+                logger.exception("Alert subscriber failed")

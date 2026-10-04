@@ -3,12 +3,14 @@
 import logging
 import threading
 from collections.abc import Callable
+from pathlib import Path
 
 from jarvis.core.events import EventBus, State
 from jarvis.voice import audio
 from jarvis.voice.elevenlabs_io import Voice
 from jarvis.voice.errors import VoiceError
 from jarvis.voice.hotkey import PressHotkey, PushToTalk
+from jarvis.voice.wakeword import WakeWordListener
 
 logger = logging.getLogger("jarvis.voice")
 
@@ -29,6 +31,8 @@ class VoiceSession:
         speak_replies: bool = True,
         bus: EventBus | None = None,
         stop_hotkey: str = "",
+        wake_dir: Path | None = None,
+        wake_threshold: float = 0.5,
     ) -> None:
         self.speak_replies = speak_replies
         self._bus = bus or EventBus()
@@ -39,6 +43,9 @@ class VoiceSession:
         self._recording = False
         self._hotkey = PushToTalk(hotkey, self._press, self._release)
         self._stop_hotkey = PressHotkey(stop_hotkey, self.stop_speaking) if stop_hotkey else None
+        self._wake = (
+            WakeWordListener(self._wake_heard, wake_dir, wake_threshold) if wake_dir else None
+        )
         self._speech_id = 0  # bumped to cancel the speech in progress
         self._speech_lock = threading.Lock()
 
@@ -55,9 +62,50 @@ class VoiceSession:
         return True
 
     def stop(self) -> None:
+        self.set_wake_word(False)
         self._hotkey.stop()
         if self._stop_hotkey is not None:
             self._stop_hotkey.stop()
+
+    @property
+    def wake_available(self) -> bool:
+        return self._wake is not None
+
+    @property
+    def wake_enabled(self) -> bool:
+        return self._wake is not None and self._wake.running
+
+    def set_wake_word(self, on: bool) -> bool:
+        """Turn "Hey Jarvis" listening on or off. Returns whether it is on afterwards; a failure
+        (no model, no mic) is reported through `notify` and leaves it off."""
+        if self._wake is None:
+            return False
+        if on:
+            try:
+                self._wake.start()
+            except VoiceError as exc:
+                logger.warning("Wake word unavailable: %s", exc)
+                self._notify(f"[voice error] Wake word is unavailable: {exc}")
+        else:
+            self._wake.stop()
+        return self._wake.running
+
+    def _wake_heard(self) -> None:
+        """ "Hey Jarvis": record hands-free until the user stops talking, then handle it like a
+        push-to-talk clip. Ignored while a request is already being handled."""
+        if self._recording or self._bus.state in (State.LISTENING, State.THINKING):
+            return
+        self.stop_speaking()
+        if self._begin_recording():
+            threading.Thread(target=self._record_hands_free, daemon=True).start()
+
+    def _record_hands_free(self) -> None:
+        self._wake.paused = True
+        try:
+            audio.wait_for_end_of_speech(lambda: self._recorder.last_rms)
+            self._finish_recording()
+        finally:
+            self._wake.paused = False
 
     def stop_speaking(self) -> None:
         """Cut off the speech in progress, including audio still being generated."""
@@ -89,16 +137,23 @@ class VoiceSession:
 
     def _press(self) -> None:
         self.stop_speaking()  # talking over Jarvis interrupts it
+        self._begin_recording()
+
+    def _begin_recording(self) -> bool:
         try:
             self._recorder.start()
         except VoiceError as exc:
             self._notify(f"[voice error] {exc}")
-            return
+            return False
         self._recording = True
         self._bus.emit(State.LISTENING)
         self._notify("[listening...]")
+        return True
 
     def _release(self) -> None:
+        self._finish_recording()
+
+    def _finish_recording(self) -> None:
         if not self._recording:
             return
         self._recording = False

@@ -65,6 +65,19 @@ def _start_menu_shortcut(name: str) -> Path | None:
     return best
 
 
+def is_known_app(name: str) -> bool:
+    """True if open_app can launch `name` (a mapped name or a Start Menu shortcut)."""
+    key = name.strip().lower()
+    return key in _app_map() or _start_menu_shortcut(key) is not None
+
+
+def is_running(name: str) -> bool:
+    """True if a process called `name` (with or without .exe) is running."""
+    wanted = name.strip().lower()
+    wanted = wanted if wanted.endswith(".exe") else wanted + ".exe"
+    return any((p.info["name"] or "").lower() == wanted for p in psutil.process_iter(["name"]))
+
+
 @tool()
 def open_app(name: str) -> str:
     """Open (launch) an application on the laptop by its name, e.g. notepad or chrome.

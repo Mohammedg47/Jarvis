@@ -1,0 +1,4 @@
+Animated emoji GIFs in this folder are from Google's Noto Emoji Animation
+(https://googlefonts.github.io/noto-emoji-animation/), licensed under
+Creative Commons Attribution 4.0 (CC BY 4.0): https://creativecommons.org/licenses/by/4.0/
+They were downscaled to 160x160 pixels. Unicode: 1f642, 1f604, 1f442, 1f914, 1f610, 1f9d0, 1f5e3.

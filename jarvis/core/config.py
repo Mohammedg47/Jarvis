@@ -17,7 +17,10 @@ def default_data_dir() -> Path:
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env", env_prefix="JARVIS_", extra="ignore", populate_by_name=True
+        env_file=(str(default_data_dir() / ".env"), ".env"),
+        env_prefix="JARVIS_",
+        extra="ignore",
+        populate_by_name=True,
     )
 
     # ElevenLabs uses its own conventional variable name, without the JARVIS_ prefix.
@@ -31,12 +34,22 @@ class Settings(BaseSettings):
     show_character: bool = True
     # Let the idle character wander around the screen (it stays put while Jarvis is busy).
     character_roam: bool = False
+    # "noto" = premade animated emoji (GIFs); "drawn" = the code-drawn face.
+    character_style: Literal["noto", "drawn"] = "noto"
 
     ollama_model: str = "qwen2.5:3b"
+    # Vision model for look_at_screen (run `ollama pull qwen2.5vl:3b` once).
+    vision_model: str = "qwen2.5vl:3b"
     personality: Literal["playful", "formal"] = "playful"
     push_to_talk_hotkey: str = "ctrl+space"
+    # Say "Hey Jarvis" to talk hands-free (needs voice). Runs locally; audio is only sent for
+    # transcription after the wake word. Toggle live with /wake or the tray.
+    wake_word: bool = True
+    wake_threshold: float = 0.5  # raise it if Jarvis wakes by mistake, lower it if he misses you
     # Press to stop Jarvis talking, from any app. Empty disables it. Also: /stop, or just talk.
     stop_hotkey: str = "esc"
+    # Press to start help mode ("I need help"), from any app. Empty disables it. Also: /stuck.
+    help_hotkey: str = "ctrl+alt+h"
 
     # Extra apps for open_app, as JSON: {"spotify": "spotify.exe"}. Merged over the built-in map.
     apps: dict[str, str] = Field(default_factory=dict)

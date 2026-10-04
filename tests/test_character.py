@@ -1,13 +1,7 @@
 from jarvis.core.events import EventBus, State
-from jarvis.ui.character import SKINS
 
 
-def test_every_state_has_a_distinct_emoji():
-    assert set(SKINS["playful"]) == set(State)
-    assert len(set(SKINS["playful"].values())) == len(State)
-
-
-def test_bus_updates_the_window_label():
+def test_bus_updates_the_face():
     from jarvis.ui.character import CharacterWindow, QApplication
 
     app = QApplication.instance() or QApplication([])
@@ -16,7 +10,8 @@ def test_bus_updates_the_window_label():
     bus.subscribe(window.state_changed.emit)
     bus.emit(State.SPEAKING)
     app.processEvents()
-    assert window._label.text() == SKINS["playful"][State.SPEAKING]
+    assert window.state == State.SPEAKING
+    assert window.face.state == State.SPEAKING
 
 
 def test_position_is_saved_and_loaded(tmp_path):

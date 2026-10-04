@@ -22,6 +22,7 @@ class InputPopup(QWidget):
     corner or Esc; drag it by its title or any empty part to move it (it then reopens there)."""
 
     reply_ready = Signal(str)  # replies come from the chat thread; this queues them onto Qt
+    expand_requested = Signal()  # the user wants the full chat window
 
     def __init__(self, submit: Callable[[str], None]) -> None:
         super().__init__()
@@ -48,6 +49,10 @@ class InputPopup(QWidget):
         self._moved_to: QPoint | None = None  # where the user last left it
         title = QLabel("Jarvis")
         title.setStyleSheet("color: #9aa0a6; font-weight: bold;")
+        self.expand_button = QPushButton("⤢")
+        self.expand_button.setToolTip("Open the chat window")
+        self.expand_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.expand_button.clicked.connect(self.expand_requested)
         self.close_button = QPushButton("✕")
         self.close_button.setToolTip("Close")
         self.close_button.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -55,6 +60,7 @@ class InputPopup(QWidget):
         header = QHBoxLayout()
         header.addWidget(title)
         header.addStretch()
+        header.addWidget(self.expand_button)
         header.addWidget(self.close_button)
         self.input = QLineEdit()
         self.input.setPlaceholderText("Ask Jarvis...")

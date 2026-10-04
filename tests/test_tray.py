@@ -1,5 +1,5 @@
 from jarvis.core.events import State
-from jarvis.ui.character import SKINS, CharacterWindow, QApplication
+from jarvis.ui.character import CharacterWindow, QApplication
 from jarvis.ui.tray import Tray, TrayControls
 
 
@@ -39,7 +39,7 @@ def test_icon_follows_state():
     _, window, tray = make(TrayControls())
     window.state_changed.emit(State.SPEAKING)
     assert not tray.icon.icon().isNull()
-    assert SKINS["playful"][State.SPEAKING]
+    assert window.face.state == State.SPEAKING
 
 
 def test_personality_menu_switches_character_and_notifies():
@@ -51,11 +51,11 @@ def test_personality_menu_switches_character_and_notifies():
     _, window, tray = make(TrayControls(personality=control))
     control.subscribe(window.personality_changed.emit)
     assert tray.personality["playful"].isChecked()
-    assert window._label.text() == SKINS["playful"][State.IDLE]
+    assert window.face.personality == "playful"
     tray.personality["formal"].trigger()
     assert control.value == "formal"
     assert seen == ["formal"]
-    assert window._label.text() == SKINS["formal"][State.IDLE]
+    assert window.face.personality == "formal"
     control.set("playful")  # e.g. /personality playful
     tray._sync()
     assert tray.personality["playful"].isChecked()

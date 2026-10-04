@@ -1,6 +1,7 @@
 """Logging to the console and a rotating file in the data directory."""
 
 import logging
+import sys
 from logging.handlers import RotatingFileHandler
 
 from jarvis.core.config import Settings
@@ -15,12 +16,13 @@ def setup_logging(settings: Settings) -> logging.Logger:
     logger.handlers.clear()
 
     formatter = logging.Formatter(LOG_FORMAT)
-    console = logging.StreamHandler()
-    console.setFormatter(formatter)
     logfile = RotatingFileHandler(
         settings.data_dir / "jarvis.log", maxBytes=1_000_000, backupCount=3, encoding="utf-8"
     )
     logfile.setFormatter(formatter)
-    logger.addHandler(console)
     logger.addHandler(logfile)
+    if sys.stderr is not None:  # a windowed app (no console) has no stderr
+        console = logging.StreamHandler()
+        console.setFormatter(formatter)
+        logger.addHandler(console)
     return logger

@@ -84,17 +84,17 @@ Each phase leaves a working system. Each step is small and has a "done when" che
 - [x] 8. Click the character to open a small text input. *Done when:* typed requests work from the overlay.
 
 ## Phase 10: Help when stuck
-1. Add a "help" system prompt mode that explains step by step. *Done when:* "I'm stuck on X" gives clear steps.
-2. Let help mode use tools and web search automatically. *Done when:* an unknown question triggers a search.
-3. Add a hotkey or character menu entry for "I need help". *Done when:* it starts a help conversation.
+- [x] 1. Add a "help" system prompt mode that explains step by step. *Done when:* "I'm stuck on X" gives clear steps.
+- [x] 2. Let help mode use tools and web search automatically. *Done when:* an unknown question triggers a search.
+- [x] 3. Add a hotkey or character menu entry for "I need help". *Done when:* it starts a help conversation.
 
 ## Phase 11: Advanced
-1. Wake-word activation ("Hey Jarvis"). *Done when:* it triggers hands-free, with a toggle to disable.
-2. Screenshot capture tool. *Done when:* a screenshot is saved on request.
-3. Vision model for screenshots in help mode. *Done when:* Jarvis describes what is on screen and suggests next steps.
-4. Full animated character replacing the emoji. *Done when:* animations map to each state.
-5. Make the Qt app the main interface (chat window, Yes/No confirmation popups, speech-bubble alerts); keep the terminal as a debug/secondary mode (`--cli`). *Done when:* Jarvis runs with no terminal and every CLI command has a UI equivalent.
-6. Packaging and start-on-login. *Done when:* a fresh Windows user can install and launch Jarvis at login.
+- [x] 1. Wake-word activation ("Hey Jarvis"). *Done when:* it triggers hands-free, with a toggle to disable.
+- [x] 2. Screenshot capture tool. *Done when:* a screenshot is saved on request.
+- [x] 3. Vision model for screenshots in help mode. *Done when:* Jarvis describes what is on screen and suggests next steps.
+- [x] 4. Full animated character replacing the emoji. *Done when:* animations map to each state.
+- [x] 5. Make the Qt app the main interface (chat window, Yes/No confirmation popups, speech-bubble alerts); keep the terminal as a debug/secondary mode (`--cli`). *Done when:* Jarvis runs with no terminal and every CLI command has a UI equivalent.
+- [x] 6. Packaging and start-on-login. *Done when:* a fresh Windows user can install and launch Jarvis at login. *Verified:* the Inno Setup installer installs per user, Jarvis launches and starts at sign-in via a Startup shortcut. Windows Defender flags the unsigned exe as a false positive, so the install folder needs a Defender exclusion (or a code-signing certificate for other machines); running from source also works.
 
 ## After the project (optional)
 1. Swap the emoji for a custom character (the user has Tung Tung Tung Sahur in mind, to be revisited): load per-state images (idle, listening, thinking, speaking) from a skin folder instead of emoji, selectable by config. Keep the character code skin-based so only the skin changes. *Done when:* dropping PNGs into the skin folder changes the character with no code changes.

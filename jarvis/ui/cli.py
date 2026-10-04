@@ -1,7 +1,6 @@
-"""Terminal chat interface."""
+"""Terminal chat interface (the debug / secondary interface; the Qt app is the main one)."""
 
 import queue
-import re
 import sys
 import threading
 from collections.abc import Callable
@@ -9,43 +8,37 @@ from collections.abc import Callable
 from prompt_toolkit import PromptSession
 from prompt_toolkit.patch_stdout import patch_stdout
 
+from jarvis.core.assistant import HELP, Assistant, is_yes
 from jarvis.core.conversation import Conversation
-from jarvis.core.events import EventBus, State
-from jarvis.core.personality import PERSONALITIES, PersonalityControl
-from jarvis.llm.client import LLMError
+from jarvis.core.events import EventBus
+from jarvis.core.personality import PersonalityControl
 from jarvis.memory import MemoryStore
 from jarvis.voice.session import VoiceSession
 
-HELP = (
-    "Commands: /clear  reset this conversation, /forget  wipe all saved memory, "
-    "/speak [on|off]  toggle spoken replies, /stop  stop talking (or press Esc), /personality [playful|formal]  change tone "
-    "(no argument switches), /help  show this, /exit  quit"
-)
-
-YES_WORDS = {"y", "yes", "yeah", "yep", "yup", "sure", "ok", "okay", "confirm", "proceed"}
-
-
-def is_yes(answer: str) -> bool:
-    """True for an explicit yes, typed or transcribed ("Yes." counts). Anything else is no."""
-    words = re.sub(r"[^\w\s]", "", answer).lower().split()
-    return bool(words) and words[0] in YES_WORDS
+__all__ = ["HELP", "Reader", "TerminalSurface", "is_yes", "make_confirm", "run_cli"]
 
 
 class Reader:
-    """Reads lines from the keyboard. Voice transcripts can be injected from another thread
-    and are returned as if typed, interrupting the prompt that is waiting."""
+    """The single input source: lines typed in the terminal, plus text injected from other
+    threads (voice transcripts, the chat window, hotkeys), returned as if typed.
 
-    def __init__(self) -> None:
-        self.interactive = sys.stdin.isatty()
+    A windowed app (`windowed=True`) never touches the terminal: `ask` just waits for injected
+    lines. `inject` interrupts a terminal prompt that is waiting.
+    """
+
+    def __init__(self, windowed: bool = False) -> None:
+        self._windowed = windowed
+        self.interactive = not windowed and bool(sys.stdin and sys.stdin.isatty())
         # prompt_toolkit needs a real console; piped stdin falls back to input().
         self._session = PromptSession() if self.interactive else None
-        self._voice_lines: queue.Queue[tuple[str, str]] = queue.Queue()
+        self._voice_lines: queue.Queue[tuple[str, str] | None] = queue.Queue()
         self._lock = threading.Lock()
         self._waiting = False
+        self.last_source = "typed"  # where the line `ask` last returned came from
 
     def inject(self, text: str, source: str = "voice") -> None:
-        """Hand a voice transcript (or text typed in the overlay) to the active or next
-        prompt. Safe from any thread."""
+        """Hand a voice transcript (or text typed in a window) to the active or next prompt.
+        Safe from any thread."""
         with self._lock:
             self._voice_lines.put((text, source))
             if self._waiting and self._session is not None:
@@ -53,24 +46,40 @@ class Reader:
                 if app.is_running:
                     app.loop.call_soon_threadsafe(lambda: app.exit(result=""))
 
+    def close(self) -> None:
+        """Wake a waiting `ask` for good: it raises EOFError (a windowed app is shutting down)."""
+        self._voice_lines.put(None)
+
     def _take_voice(self, label: str) -> str | None:
         try:
-            text, source = self._voice_lines.get_nowait()
+            item = self._voice_lines.get_nowait()
         except queue.Empty:
             return None
-        print(f"{label}{text}  [{source}]")
+        if item is None:
+            raise EOFError
+        text, source = item
+        self.last_source = source
+        if self.interactive:
+            print(f"{label}{text}  [{source}]")
         return text
 
     def ask(self, label: str, fresh: bool = False) -> str:
-        """Prompt for a line. `fresh` drops voice input spoken before this question."""
+        """Prompt for a line. `fresh` drops input injected before this question."""
         if fresh:
             while not self._voice_lines.empty():
                 self._voice_lines.get_nowait()
+        self.last_source = "typed"
         voice = self._take_voice(label)
         if voice is not None:
             return voice
         if self._session is None:
-            return input(label)
+            if not self._windowed:
+                return input(label)  # piped stdin (scripts, tests)
+            item = self._voice_lines.get()  # a windowed app: only injected lines arrive
+            if item is None:
+                raise EOFError
+            self.last_source = item[1]
+            return item[0]
         with self._lock:
             self._waiting = True
         try:
@@ -83,17 +92,65 @@ class Reader:
         return typed if voice is None else voice
 
 
-def make_confirm(reader: Reader, voice: VoiceSession | None = None) -> Callable[[str, dict], bool]:
-    """Confirmation callback for risky tools: answer by typing or by voice."""
+def make_confirm(
+    reader: Reader,
+    voice: VoiceSession | None = None,
+    show: Callable[[str, dict], None] | None = None,
+    hide: Callable[[], None] | None = None,
+) -> Callable[[str, dict], bool]:
+    """Confirmation callback for risky tools: answer by typing or by voice. A windowed app
+    passes `show`/`hide` for its Yes/No popup, whose buttons inject "yes"/"no" into the reader."""
 
     def confirm(name: str, arguments: dict) -> bool:
         args = ", ".join(f"{k}={v!r}" for k, v in arguments.items())
         print(f"\n[confirm] Jarvis wants to run {name}({args}).")
+        if show is not None:
+            show(name, arguments)
         if voice is not None and voice.speak_replies:
             voice.say(f"Should I run {name.replace('_', ' ')}? Say yes or no.")
-        return is_yes(reader.ask("Allow? [y/N] ", fresh=True))
+        try:
+            return is_yes(reader.ask("Allow? [y/N] ", fresh=True))
+        finally:
+            if hide is not None:
+                hide()
 
     return confirm
+
+
+class TerminalSurface:
+    """Shows the assistant's output in the terminal (and in the overlay via `on_reply`)."""
+
+    def __init__(self, reader: Reader, on_reply: Callable[[str], None] | None = None) -> None:
+        self._reader = reader
+        self._on_reply = on_reply
+
+    def _show(self, text: str) -> None:  # the overlay shows replies too
+        if self._on_reply is not None:
+            self._on_reply(text)
+
+    def notice(self, text: str) -> None:
+        print(text)
+        self._show(text)
+
+    def reply_started(self) -> None:
+        print("Jarvis: ", end="", flush=True)
+
+    def reply_chunk(self, text: str) -> None:
+        print(text, end="", flush=True)
+
+    def reply_finished(self, text: str) -> None:
+        print()
+        self._show(text)
+
+    def reply_failed(self, text: str) -> None:
+        print(f"\n[error] {text}")
+        self._show(f"[error] {text}")
+
+    def reply_interrupted(self) -> None:
+        print("\n[interrupted]")
+
+    def ask_yes_no(self, question: str) -> bool:
+        return is_yes(self._reader.ask(f"{question} [y/N] "))
 
 
 def run_cli(
@@ -106,83 +163,16 @@ def run_cli(
     on_reply: Callable[[str], None] | None = None,
 ) -> None:
     reader = reader or Reader()
-    bus = bus or EventBus()
-    personality = personality or PersonalityControl()
-
-    def show(text: str) -> None:  # the overlay shows replies too
-        if on_reply is not None:
-            on_reply(text)
-
+    assistant = Assistant(conversation, memory, voice, personality, bus)
+    surface = TerminalSurface(reader, on_reply)
     print(f"Jarvis is ready. {HELP}")
     if voice is not None:
         print("Hold the push-to-talk hotkey to speak.")
     while True:
         try:
-            text = reader.ask("You: ").strip()
+            text = reader.ask("You: ")
         except (EOFError, KeyboardInterrupt):
             break
-        if not text:
-            continue
-        if voice is not None:
-            voice.stop_speaking()  # a new message cuts off the previous reply
-        if text.startswith("/"):
-            command, _, arg = text.lower().partition(" ")
-            if command in ("/exit", "/quit"):
-                break
-            if command == "/clear":
-                conversation.clear()
-                print("Conversation cleared.")
-            elif command == "/forget":
-                if memory is None:
-                    print("There is no saved memory.")
-                elif is_yes(reader.ask("Wipe all saved history and preferences? [y/N] ")):
-                    memory.forget_all()
-                    conversation.clear()
-                    print("Memory wiped.")
-                else:
-                    print("Memory kept.")
-            elif command == "/stop":
-                pass  # speech was already stopped above
-            elif command == "/speak":
-                if voice is None:
-                    print("Voice is not available (set ELEVENLABS_API_KEY and use a console).")
-                else:
-                    voice.speak_replies = {"on": True, "off": False}.get(
-                        arg.strip(), not voice.speak_replies
-                    )
-                    print(f"Spoken replies are {'on' if voice.speak_replies else 'off'}.")
-            elif command == "/personality":
-                if arg.strip() in PERSONALITIES:
-                    personality.set(arg.strip())
-                else:
-                    personality.toggle()
-                print(f"Personality is now {personality.value}.")
-            elif command == "/help":
-                print(HELP)
-            else:
-                print(f"Unknown command {text}. {HELP}")
-            continue
-
-        print("Jarvis: ", end="", flush=True)
-        reply: list[str] = []
-        speaking = False  # the speech thread then reports the return to idle
-        bus.emit(State.THINKING)
-        try:
-            for chunk in conversation.send(text):
-                reply.append(chunk)
-                print(chunk, end="", flush=True)
-        except LLMError as exc:
-            print(f"\n[error] {exc}")
-            show(f"[error] {exc}")
-        except KeyboardInterrupt:
-            print("\n[interrupted]")
-        else:
-            print()
-            show("".join(reply))
-            if voice is not None and voice.speak_replies:
-                speaking = True
-                voice.say_async("".join(reply))  # the prompt stays free to type, talk or stop
-        finally:
-            if not speaking:
-                bus.emit(State.IDLE)
+        if not assistant.handle(text, surface):
+            break
     print("Goodbye.")

@@ -11,3 +11,7 @@ credentials.json
 token.json
 data/
 *.log
+
+# Packaging output
+/build/
+/dist/

@@ -8,6 +8,7 @@ from jarvis.tools import (  # noqa: F401  (registers the tools)
     gmail,
     memory,
     reminders,
+    screen,
     system,
     web,
 )
