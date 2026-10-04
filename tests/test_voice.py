@@ -18,7 +18,7 @@ class FakeVoice:
     def __init__(self, text="hello", error=None):
         self.text, self.error, self.spoken = text, error, []
 
-    def speak(self, text):
+    def speak(self, text, should_play=lambda: True):
         if self.error:
             raise self.error
         self.spoken.append(text)
@@ -124,3 +124,42 @@ def test_reader_fresh_drops_old_voice_lines(monkeypatch):
     reader.inject("stale")
     monkeypatch.setattr("builtins.input", lambda label: "typed")
     assert reader.ask("Allow? ", fresh=True) == "typed"
+
+
+def test_stop_speaking_cancels_speech_and_returns_to_idle(monkeypatch):
+    import threading
+
+    from jarvis.core.events import EventBus, State
+    from jarvis.voice import audio
+    from jarvis.voice.session import VoiceSession
+
+    stopped = []
+    monkeypatch.setattr(audio, "stop_playback", lambda: stopped.append(True))
+    release = threading.Event()
+    played: list[str] = []
+
+    class FakeVoice:
+        def speak(self, text, should_play=lambda: True):
+            release.wait(2)  # the audio is "being generated"
+            if should_play():
+                played.append(text)
+
+    bus = EventBus()
+    session = VoiceSession(FakeVoice(), "ctrl+space", lambda t: None, bus=bus)
+    thread = threading.Thread(target=session.say, args=("hello",))
+    thread.start()
+    while bus.state != State.SPEAKING:
+        pass
+    session.stop_speaking()
+    assert bus.state == State.IDLE
+    release.set()
+    thread.join()
+    assert played == []  # stopped before the audio was ready, so it never plays
+    assert stopped
+
+
+def test_reader_injected_overlay_line_is_returned(monkeypatch):
+    monkeypatch.setattr("sys.stdin.isatty", lambda: False, raising=False)
+    reader = Reader()
+    reader.inject("what time is it", "overlay")
+    assert reader.ask("You: ") == "what time is it"

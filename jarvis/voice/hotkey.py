@@ -31,6 +31,23 @@ class HoldTracker:
                 self._on_stop()
 
 
+class PressHotkey:
+    """Global single-press hotkey (works while other apps have focus; the key still reaches them)."""
+
+    def __init__(self, hotkey: str, on_press: Callable[[], None]):
+        self._hotkey = hotkey
+        self._on_press = on_press
+        self._handle = None
+
+    def start(self) -> None:
+        self._handle = keyboard.add_hotkey(self._hotkey, self._on_press)
+
+    def stop(self) -> None:
+        if self._handle is not None:
+            keyboard.remove_hotkey(self._handle)
+            self._handle = None
+
+
 class PushToTalk:
     """Global hold-to-talk hotkey (works while other apps have focus)."""
 

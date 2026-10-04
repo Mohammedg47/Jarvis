@@ -27,9 +27,16 @@ class Settings(BaseSettings):
     # Speak replies aloud (needs an ElevenLabs key). Toggle live with /speak.
     speak_replies: bool = True
 
+    # Show the floating character (needs a real console). Turn off for a terminal-only Jarvis.
+    show_character: bool = True
+    # Let the idle character wander around the screen (it stays put while Jarvis is busy).
+    character_roam: bool = False
+
     ollama_model: str = "qwen2.5:3b"
     personality: Literal["playful", "formal"] = "playful"
     push_to_talk_hotkey: str = "ctrl+space"
+    # Press to stop Jarvis talking, from any app. Empty disables it. Also: /stop, or just talk.
+    stop_hotkey: str = "esc"
 
     # Extra apps for open_app, as JSON: {"spotify": "spotify.exe"}. Merged over the built-in map.
     apps: dict[str, str] = Field(default_factory=dict)

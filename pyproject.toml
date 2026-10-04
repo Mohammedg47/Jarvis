@@ -23,6 +23,7 @@ dependencies = [
     "keyboard>=0.13",
     "google-api-python-client>=2.100",
     "google-auth-oauthlib>=1.2",
+    "PySide6>=6.6",
 ]
 
 [project.optional-dependencies]

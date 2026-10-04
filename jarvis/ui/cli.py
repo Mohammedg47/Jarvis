@@ -10,18 +10,17 @@ from prompt_toolkit import PromptSession
 from prompt_toolkit.patch_stdout import patch_stdout
 
 from jarvis.core.conversation import Conversation
+from jarvis.core.events import EventBus, State
+from jarvis.core.personality import PERSONALITIES, PersonalityControl
 from jarvis.llm.client import LLMError
-from jarvis.llm.system_prompt import build_system_prompt
 from jarvis.memory import MemoryStore
 from jarvis.voice.session import VoiceSession
 
 HELP = (
     "Commands: /clear  reset this conversation, /forget  wipe all saved memory, "
-    "/speak [on|off]  toggle spoken replies, /personality [playful|formal]  change tone "
+    "/speak [on|off]  toggle spoken replies, /stop  stop talking (or press Esc), /personality [playful|formal]  change tone "
     "(no argument switches), /help  show this, /exit  quit"
 )
-
-PERSONALITIES = ("playful", "formal")
 
 YES_WORDS = {"y", "yes", "yeah", "yep", "yup", "sure", "ok", "okay", "confirm", "proceed"}
 
@@ -40,14 +39,15 @@ class Reader:
         self.interactive = sys.stdin.isatty()
         # prompt_toolkit needs a real console; piped stdin falls back to input().
         self._session = PromptSession() if self.interactive else None
-        self._voice_lines: queue.Queue[str] = queue.Queue()
+        self._voice_lines: queue.Queue[tuple[str, str]] = queue.Queue()
         self._lock = threading.Lock()
         self._waiting = False
 
-    def inject(self, text: str) -> None:
-        """Hand a voice transcript to the active (or next) prompt. Safe from any thread."""
+    def inject(self, text: str, source: str = "voice") -> None:
+        """Hand a voice transcript (or text typed in the overlay) to the active or next
+        prompt. Safe from any thread."""
         with self._lock:
-            self._voice_lines.put(text)
+            self._voice_lines.put((text, source))
             if self._waiting and self._session is not None:
                 app = self._session.app
                 if app.is_running:
@@ -55,10 +55,10 @@ class Reader:
 
     def _take_voice(self, label: str) -> str | None:
         try:
-            text = self._voice_lines.get_nowait()
+            text, source = self._voice_lines.get_nowait()
         except queue.Empty:
             return None
-        print(f"{label}{text}  [voice]")
+        print(f"{label}{text}  [{source}]")
         return text
 
     def ask(self, label: str, fresh: bool = False) -> str:
@@ -101,9 +101,18 @@ def run_cli(
     memory: MemoryStore | None = None,
     reader: Reader | None = None,
     voice: VoiceSession | None = None,
-    personality: str = "playful",
+    personality: PersonalityControl | None = None,
+    bus: EventBus | None = None,
+    on_reply: Callable[[str], None] | None = None,
 ) -> None:
     reader = reader or Reader()
+    bus = bus or EventBus()
+    personality = personality or PersonalityControl()
+
+    def show(text: str) -> None:  # the overlay shows replies too
+        if on_reply is not None:
+            on_reply(text)
+
     print(f"Jarvis is ready. {HELP}")
     if voice is not None:
         print("Hold the push-to-talk hotkey to speak.")
@@ -114,6 +123,8 @@ def run_cli(
             break
         if not text:
             continue
+        if voice is not None:
+            voice.stop_speaking()  # a new message cuts off the previous reply
         if text.startswith("/"):
             command, _, arg = text.lower().partition(" ")
             if command in ("/exit", "/quit"):
@@ -130,6 +141,8 @@ def run_cli(
                     print("Memory wiped.")
                 else:
                     print("Memory kept.")
+            elif command == "/stop":
+                pass  # speech was already stopped above
             elif command == "/speak":
                 if voice is None:
                     print("Voice is not available (set ELEVENLABS_API_KEY and use a console).")
@@ -140,11 +153,10 @@ def run_cli(
                     print(f"Spoken replies are {'on' if voice.speak_replies else 'off'}.")
             elif command == "/personality":
                 if arg.strip() in PERSONALITIES:
-                    personality = arg.strip()
+                    personality.set(arg.strip())
                 else:
-                    personality = "formal" if personality == "playful" else "playful"
-                conversation.set_system_prompt(build_system_prompt(personality))
-                print(f"Personality is now {personality}.")
+                    personality.toggle()
+                print(f"Personality is now {personality.value}.")
             elif command == "/help":
                 print(HELP)
             else:
@@ -153,19 +165,24 @@ def run_cli(
 
         print("Jarvis: ", end="", flush=True)
         reply: list[str] = []
+        speaking = False  # the speech thread then reports the return to idle
+        bus.emit(State.THINKING)
         try:
             for chunk in conversation.send(text):
                 reply.append(chunk)
                 print(chunk, end="", flush=True)
         except LLMError as exc:
             print(f"\n[error] {exc}")
+            show(f"[error] {exc}")
         except KeyboardInterrupt:
             print("\n[interrupted]")
         else:
             print()
+            show("".join(reply))
             if voice is not None and voice.speak_replies:
-                try:
-                    voice.say("".join(reply))
-                except KeyboardInterrupt:
-                    print("[speech stopped]")
+                speaking = True
+                voice.say_async("".join(reply))  # the prompt stays free to type, talk or stop
+        finally:
+            if not speaking:
+                bus.emit(State.IDLE)
     print("Goodbye.")

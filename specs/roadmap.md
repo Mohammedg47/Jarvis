@@ -74,14 +74,14 @@ Each phase leaves a working system. Each step is small and has a "done when" che
 - [x] 11. Add a config option to turn each proactive alert on or off. *Done when:* disabling stops the polling.
 
 ## Phase 9: Floating character
-1. Add an event bus emitting idle/listening/thinking/speaking. *Done when:* events log in the CLI.
-2. Show a transparent, frameless, always-on-top emoji window. *Done when:* the emoji floats over other apps.
-3. Change the emoji per state. *Done when:* it changes as Jarvis moves between states.
-4. Let the user drag it. *Done when:* the position is remembered.
-5. Add idle movement/animation around the screen (optional toggle). *Done when:* it moves without blocking clicks.
-6. Add a system tray icon with Quit and Mute. *Done when:* both work.
-7. Add a Playful/Formal setting that changes the character and the LLM tone. *Done when:* switching it changes both.
-8. Click the character to open a small text input. *Done when:* typed requests work from the overlay.
+- [x] 1. Add an event bus emitting idle/listening/thinking/speaking. *Done when:* events log in the CLI.
+- [x] 2. Show a transparent, frameless, always-on-top emoji window. *Done when:* the emoji floats over other apps.
+- [x] 3. Change the emoji per state. *Done when:* it changes as Jarvis moves between states.
+- [x] 4. Let the user drag it. *Done when:* the position is remembered.
+- [x] 5. Add idle movement/animation around the screen (optional toggle). *Done when:* it moves without blocking clicks.
+- [x] 6. Add a system tray icon with Quit and Mute. *Done when:* both work.
+- [x] 7. Add a Playful/Formal setting that changes the character and the LLM tone. *Done when:* switching it changes both.
+- [x] 8. Click the character to open a small text input. *Done when:* typed requests work from the overlay.
 
 ## Phase 10: Help when stuck
 1. Add a "help" system prompt mode that explains step by step. *Done when:* "I'm stuck on X" gives clear steps.
@@ -93,4 +93,8 @@ Each phase leaves a working system. Each step is small and has a "done when" che
 2. Screenshot capture tool. *Done when:* a screenshot is saved on request.
 3. Vision model for screenshots in help mode. *Done when:* Jarvis describes what is on screen and suggests next steps.
 4. Full animated character replacing the emoji. *Done when:* animations map to each state.
-5. Packaging and start-on-login. *Done when:* a fresh Windows user can install and launch Jarvis at login.
+5. Make the Qt app the main interface (chat window, Yes/No confirmation popups, speech-bubble alerts); keep the terminal as a debug/secondary mode (`--cli`). *Done when:* Jarvis runs with no terminal and every CLI command has a UI equivalent.
+6. Packaging and start-on-login. *Done when:* a fresh Windows user can install and launch Jarvis at login.
+
+## After the project (optional)
+1. Swap the emoji for a custom character (the user has Tung Tung Tung Sahur in mind, to be revisited): load per-state images (idle, listening, thinking, speaking) from a skin folder instead of emoji, selectable by config. Keep the character code skin-based so only the skin changes. *Done when:* dropping PNGs into the skin folder changes the character with no code changes.

@@ -44,6 +44,7 @@ specs/
 - **Permission layer**: every tool call passes through one gate. `risky` tools require a yes/no confirmation, by text or by voice, before running.
 - **Event bus**: the core emits state events (idle, listening, thinking, speaking). The floating character and CLI subscribe to them.
 - **One conversation, many inputs**: text and voice both feed the same message pipeline.
+- **UI direction**: Phase 9 runs Qt on the main thread with the terminal chat loop on a background thread (the terminal stays the primary interface). The end state (Phase 11) is the Qt app as the main interface, with the terminal kept for debugging. Keep conversation, tools and confirmations independent of the UI (the event bus and `confirm` callback) so this swap is cheap.
 - **Personality**: a Playful/Formal setting changes the system prompt and the character's behavior.
 
 ## Secrets and data
