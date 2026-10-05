@@ -147,23 +147,29 @@ class Assistant:
 
     def _reply(self, text: str, surface: Surface) -> None:
         reply: list[str] = []
-        speaking = False  # the speech thread then reports the return to idle
+        speech = None  # speaks the reply sentence by sentence while it is still being written
+        if self.voice is not None and self.voice.speak_replies:
+            speech = self.voice.begin_stream()
+        spoken = False  # the speech stream then reports the return to idle
         self.bus.emit(State.THINKING)
         surface.reply_started()
         try:
             for chunk in self.conversation.send(text):
                 reply.append(chunk)
                 surface.reply_chunk(chunk)
+                if speech is not None:
+                    speech.feed(chunk)
         except LLMError as exc:
             surface.reply_failed(str(exc))
         except KeyboardInterrupt:
             surface.reply_interrupted()
         else:
-            answer = "".join(reply)
-            surface.reply_finished(answer)
-            if self.voice is not None and self.voice.speak_replies:
-                speaking = True
-                self.voice.say_async(answer)  # the prompt stays free to type, talk or stop
+            surface.reply_finished("".join(reply))
+            if speech is not None:
+                speech.finish()
+                spoken = True
         finally:
-            if not speaking:
+            if speech is not None and not spoken:
+                speech.cancel()
+            if not spoken:
                 self.bus.emit(State.IDLE)

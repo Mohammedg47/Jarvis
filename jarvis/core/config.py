@@ -38,6 +38,9 @@ class Settings(BaseSettings):
     character_style: Literal["noto", "drawn"] = "noto"
 
     ollama_model: str = "qwen2.5:3b"
+    # How long Ollama keeps the model loaded when idle ("30m", "2h", "-1" = forever). A longer
+    # time avoids a ~15 s reload, but holds about 2 GB of GPU memory.
+    ollama_keep_alive: str = "30m"
     # Vision model for look_at_screen (run `ollama pull qwen2.5vl:3b` once).
     vision_model: str = "qwen2.5vl:3b"
     personality: Literal["playful", "formal"] = "playful"

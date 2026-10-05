@@ -1,6 +1,7 @@
 import argparse
 import os
 import sys
+import threading
 
 from jarvis.core import autostart
 from jarvis.core.assistant import Assistant
@@ -76,7 +77,7 @@ def main(argv: list[str] | None = None) -> None:
         settings.personality,
         "terminal" if args.cli else "Qt app",
     )
-    client = OllamaClient(settings.ollama_model)
+    client = OllamaClient(settings.ollama_model, settings.ollama_keep_alive)
     memory = MemoryStore(settings.data_dir / "memory.db")
     configure_memory_tools(memory)
     bus = EventBus()
@@ -124,6 +125,13 @@ def main(argv: list[str] | None = None) -> None:
         help_prompt=build_help_prompt(),
         direct=direct_call,
     )
+
+    threading.Thread(  # load the model now so the first message is not a 15 s cold start
+        target=client.warm_up,
+        args=(list(conversation.messages), runner.schemas()),
+        name="jarvis-warmup",
+        daemon=True,
+    ).start()
 
     personality = PersonalityControl(settings.personality)
     personality.subscribe(lambda name: conversation.set_system_prompt(build_system_prompt(name)))

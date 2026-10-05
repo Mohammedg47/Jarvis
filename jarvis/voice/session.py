@@ -7,9 +7,10 @@ from pathlib import Path
 
 from jarvis.core.events import EventBus, State
 from jarvis.voice import audio
-from jarvis.voice.elevenlabs_io import Voice
-from jarvis.voice.errors import VoiceError
+from jarvis.voice.elevenlabs_io import TTS_RATE, Voice
+from jarvis.voice.errors import VoiceError, explain
 from jarvis.voice.hotkey import PressHotkey, PushToTalk
+from jarvis.voice.speech_stream import SpeechStream
 from jarvis.voice.wakeword import WakeWordListener
 
 logger = logging.getLogger("jarvis.voice")
@@ -130,6 +131,33 @@ class VoiceSession:
         finally:
             if self._speech_id == mine:  # a newer speech owns the state otherwise
                 self._bus.emit(State.IDLE)
+
+    def begin_stream(self) -> SpeechStream:
+        """Start speaking a reply that is still being written (see SpeechStream). Replaces any
+        speech in progress; `stop_speaking` cuts it off like any other."""
+        with self._speech_lock:
+            self._speech_id += 1
+            mine = self._speech_id
+        audio.stop_playback()
+
+        def is_current() -> bool:
+            return self._speech_id == mine
+
+        def on_error(exc: Exception) -> None:
+            error = explain(exc)
+            logger.warning("Speech failed: %s", error)
+            self._notify(f"[voice error] {error}")
+            if is_current():
+                self._bus.emit(State.IDLE)
+
+        return SpeechStream(
+            synthesize=self._voice.synthesize,
+            play=lambda pcm: audio.play(pcm, TTS_RATE),
+            is_current=is_current,
+            on_start=lambda: self._bus.emit(State.SPEAKING),
+            on_end=lambda: self._bus.emit(State.IDLE),
+            on_error=on_error,
+        )
 
     def say_async(self, text: str) -> None:
         """Speak in the background so the prompt stays free to type, talk or stop."""

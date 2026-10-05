@@ -31,12 +31,11 @@ class Voice:
         self._client = ElevenLabs(api_key=api_key)
         self._voice_id = voice_id or DEFAULT_VOICE_ID
 
-    def speak(self, text: str, should_play: Callable[[], bool] = lambda: True) -> None:
-        """Speak text. `should_play` is checked once the audio is ready, so speech that was
-        stopped while it was being generated stays silent."""
+    def synthesize(self, text: str) -> np.ndarray | None:
+        """Turn text into 24 kHz audio (None if there is nothing to say)."""
         text = clean_for_speech(text)
         if not text:
-            return
+            return None
         try:
             chunks = self._client.text_to_speech.convert(
                 self._voice_id, text=text, model_id=TTS_MODEL, output_format="pcm_24000"
@@ -44,9 +43,14 @@ class Voice:
             pcm = b"".join(chunks)
         except Exception as exc:
             raise explain(exc) from exc
-        if not should_play():
-            return
-        audio.play(np.frombuffer(pcm[: len(pcm) // 2 * 2], dtype="int16"), TTS_RATE)
+        return np.frombuffer(pcm[: len(pcm) // 2 * 2], dtype="int16")
+
+    def speak(self, text: str, should_play: Callable[[], bool] = lambda: True) -> None:
+        """Speak text. `should_play` is checked once the audio is ready, so speech that was
+        stopped while it was being generated stays silent."""
+        samples = self.synthesize(text)
+        if samples is not None and should_play():
+            audio.play(samples, TTS_RATE)
 
     def transcribe(self, samples: np.ndarray) -> str:
         """Send recorded samples to speech-to-text and return the transcript."""
